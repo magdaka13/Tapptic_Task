@@ -49,6 +49,7 @@ public class SimpleFragment extends Fragment {
     private  ArrayList<Item> items;
     private MyAdapter mAdapter;
     private int cur_pos;
+    private int currentPage;
 
     public SimpleFragment() {
         // Required empty public constructor
@@ -63,7 +64,7 @@ public class SimpleFragment extends Fragment {
                 inflater.inflate(R.layout.fragment_simple, container, false);
 
 
-        mRecyclerView =  (RecyclerView)rootView.findViewById(R.id.recyclerview_items);
+        mRecyclerView =  rootView.findViewById(R.id.recyclerview_items);
 
         LinearLayoutManager layoutManager =
                 new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
@@ -74,6 +75,26 @@ public class SimpleFragment extends Fragment {
         getActivity().getSupportLoaderManager().initLoader(ID_LOADER, sourceBundle, new ItemsLoader());
         restartLoader();
 
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                final int scrollOffset = recyclerView.computeVerticalScrollOffset();
+                final int width = recyclerView.getHeight();
+                currentPage = scrollOffset / width;
+                final float pageOffset = (float) (scrollOffset % width) / width;
+
+                Log.e("MainActivity","page="+Integer.toString(currentPage));
+                Log.e("MainActivity","pageoffset="+Float.toString(pageOffset));
+            }
+        });
+
         // When click itemView.
         mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getContext(),
                 mRecyclerView, new ClickListener() {
@@ -81,7 +102,14 @@ public class SimpleFragment extends Fragment {
             public void onDoubleClick(View view, final int position) {
                 TextView mItemTextView;
 
-                    cur_pos = position;
+                if (currentPage>0) {
+                    currentPage = currentPage + 1;
+                    cur_pos = position % currentPage ;
+                }
+                else
+                {
+                    cur_pos=position;
+                }
 
                 Log.e("MainActivity", "position=" + Integer.toString(cur_pos));
 
@@ -89,7 +117,7 @@ public class SimpleFragment extends Fragment {
                 for (int i = 0; i < mRecyclerView.getChildCount(); i++) {
                     View v = mRecyclerView.getChildAt(i);
                     mRecyclerView.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                    mItemTextView = (TextView) mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
+                    mItemTextView =  mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
                     mItemTextView.setTextColor(Color.BLACK);
 
                 }
@@ -99,7 +127,7 @@ public class SimpleFragment extends Fragment {
 
                 if (v != null) {
                     v.setBackgroundColor(getResources().getColor(R.color.touched_color));
-                    mItemTextView = (TextView) mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
+                    mItemTextView =  mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
                     mItemTextView.setTextColor(Color.WHITE);
 
                     Intent i = new Intent(getContext(), ItemActivity.class);
@@ -114,14 +142,21 @@ public class SimpleFragment extends Fragment {
         public void onFocus(View view, int position) {
             TextView mItemTextView;
 
+            if (currentPage>0) {
+                currentPage = currentPage + 1;
+                cur_pos = position % currentPage ;
+            }
+            else
+            {
                 cur_pos=position;
+            }
 
             Log.e("MainActivity","position="+Integer.toString(cur_pos));
 
             for (int i = 0; i < mRecyclerView.getChildCount(); i++) {
                 View v = mRecyclerView.getChildAt(i);
                 mRecyclerView.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                mItemTextView = (TextView) mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
+                mItemTextView =  mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
                 mItemTextView.setTextColor(Color.BLACK);
 
             }
@@ -129,7 +164,7 @@ public class SimpleFragment extends Fragment {
             View v = mRecyclerView.getChildAt(cur_pos);
             if (v != null) {
                 mRecyclerView.getChildAt(cur_pos).setBackgroundColor(getResources().getColor(R.color.focused_color));
-                mItemTextView = (TextView) mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
+                mItemTextView =  mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
                 mItemTextView.setTextColor(Color.WHITE);
             }
         }
@@ -138,7 +173,14 @@ public class SimpleFragment extends Fragment {
         public void onLongClick(View view, int position) {
             TextView mItemTextView ;
 
+            if (currentPage>0) {
+                currentPage = currentPage + 1;
+                cur_pos = position % currentPage ;
+            }
+            else
+            {
                 cur_pos=position;
+            }
 
             Log.e("MainActivity","position="+Integer.toString(cur_pos));
 
@@ -146,7 +188,7 @@ public class SimpleFragment extends Fragment {
             {
                 View v=mRecyclerView.getChildAt(i);
                 mRecyclerView.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                mItemTextView=(TextView)mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
+                mItemTextView=mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
                 mItemTextView.setTextColor(Color.BLACK);
 
             }
@@ -154,7 +196,7 @@ public class SimpleFragment extends Fragment {
             View v=mRecyclerView.getChildAt(cur_pos);
             if (v!=null) {
                 mRecyclerView.getChildAt(cur_pos).setBackgroundColor(getResources().getColor(R.color.selected_color));
-                mItemTextView = (TextView) mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
+                mItemTextView =  mRecyclerView.getChildViewHolder(v).itemView.findViewById(R.id.tv_text);
                 mItemTextView.setTextColor(Color.WHITE);
             }
             //Toast.makeText(MainActivity.this, "Long press on position :"+position,
@@ -246,8 +288,8 @@ public class SimpleFragment extends Fragment {
 
                     @Override
                     public ArrayList<Item> loadInBackground() {
-                        ArrayList<Item> items1 = NetworkUtils.parseJSON();
-                        return items1;
+
+                        return NetworkUtils.parseJSON();
                     }
 
                     public void deliverResult(ArrayList<Item> data) {
